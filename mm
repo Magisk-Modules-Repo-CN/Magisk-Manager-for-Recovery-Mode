@@ -158,8 +158,9 @@ exxit() {
 list_mods() {
 	echo -e "<已安装模块列表>\n"
 	for mods in $(mod_ls); do
-		source $MOUNTPATH/$mods/module.prop
-		echo "$id ($name)"
+		modid=`sed '/^id=/!d;s/.*=//' $MOUNTPATH/$mods/module.prop`    
+		modname=`sed '/^name=/!d;s/.*=//' $MOUNTPATH/$mods/module.prop`  
+		echo "$modid ($modname)"
 	done
 }
 
