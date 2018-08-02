@@ -1,5 +1,5 @@
 #!/sbin/sh
-# (c) 2017-2018, VR25 @ xda-developers
+# (c) 2017-2018, VR25 @ xda-developers ; cjybyjk @ coolapk
 # License: GPL v3+
 
 # language select
