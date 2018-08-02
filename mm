@@ -179,8 +179,8 @@ exxit() {
 list_mods() {
 	$CHINESE && echo -e "<已安装模块列表>\n" || echo -e "<Installed Modules>\n"
 	for mods in $(ls_mount_path); do
-		modid=`sed '/^id=/!d;s/.*=//' $MOUNTPATH/$mods/module.prop`    
-		modname=`sed '/^name=/!d;s/.*=//' $MOUNTPATH/$mods/module.prop`  
+		modid=`sed '/^id=/!d;s/.*=//' $mountPath/$mods/module.prop`    
+		modname=`sed '/^name=/!d;s/.*=//' $mountPath/$mods/module.prop`  
 		echo "$modid ($modname)"
 	done
 }
