@@ -173,7 +173,7 @@ exxit() {
 	umount $mountPath
 	losetup -d $loopDevice
 	rmdir $mountPath
-	[ "$1" != "1" ] && ($CHINESE && exec echo -e "再见.\n" || exec echo -e "Goodbye.\n") || exit 1
+	[ "$1" != "1" ] && ($CHINESE && echo -e "再见.\n" || echo -e "Goodbye.\n") && exit 0 || exit 1
 }
 
 list_mods() {
