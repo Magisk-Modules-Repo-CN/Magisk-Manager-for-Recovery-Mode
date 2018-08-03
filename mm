@@ -142,7 +142,7 @@ toggle() {
 		fi
 	done
 	
-	cat $tmpf2 | sed 's/ $ON//' | sed 's/ $OFF//' > $tmpf
+	cat $tmpf2 | sed "s/ $ON//" | sed "s/ $OFF//" > $tmpf
 	
 	if grep -Eq '[0-9]|[a-z]|[A-Z]' $tmpf; then
 		. $tmpf
