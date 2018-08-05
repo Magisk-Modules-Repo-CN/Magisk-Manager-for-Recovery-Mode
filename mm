@@ -144,7 +144,7 @@ exxit() {
 list_mods() {
 	echo -e "<已安装模块列表>\n"
 	for mods in $(ls_mount_path); do 
-		modname=`sed '/^name=/!d;s/.*=//' $mountPath/$mods/module.prop`
+		modname=`cat $mountPath/$mods/module.prop | grep '^name' | awk -F'=' '{ print $2 }' `
 		echo "$mods ($modname)"
 	done
 }
