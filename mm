@@ -7,8 +7,8 @@ CHINESE=false
 ON="(ON)"
 OFF="(OFF)"
 zh_prop="$(getprop persist.sys.locale) $(getprop persist.sys.language)"
-if [ -f "/twres/languages/zh_CN.xml" ] || [ -f "/twres/languages/zh_TW.xml" ] || \
-	[ "$(echo $zh_prop | grep zh)" != "" ]; then
+if [ "$(grep 'zh' '/sdcard/TWRP/.twres')" != "" ] || \
+	[ "$(echo $zh_prop | grep 'zh')" != "" ]; then
 	CHINESE=true
 	ON="(启用)"
 	OFF="(禁用)"
@@ -22,7 +22,9 @@ $BOOTMODE || id | grep -q 'uid=0' || BOOTMODE=true
 # exit if running in boot mode
 if $BOOTMODE; then
 	if $CHINESE; then
-		echo -e "- 这仅适用于Recovery模式\n"
+		echo -e "\n我知道你想干啥... :)"
+		echo "- 这是个坏主意! "
+		echo -e "- 仅供在recovery模式下使用\n"
 	else
 		echo -e "\nI saw what you did there... :)"
 		echo "- Bad idea!"
@@ -98,7 +100,7 @@ EOD
 }
 
 exit_or_not() {
-	$CHINESE && echo -e "\n(i) 你还想做其他事吗? (Y/n)" || echo -e "\n(i) Would you like to do anything else? (Y/n)"
+	$CHINESE && echo -e "\n(i) 你还想继续进行其他操作吗? (Y/n)" || echo -e "\n(i) Would you like to do anything else? (Y/n)"
 	read Ans
 	echo $Ans | grep -iq n && echo && exxit || opts
 }
@@ -126,8 +128,9 @@ toggle() {
 	cat $tmpf
 	echo
 	if $CHINESE; then
-	echo "(i) 输入模块id的前几个字符或者全部字符"
-	echo "- 当输入完成时按两次[ENTER]; 按下 [CTRL]+C 退出"
+		echo "(i) 输入模块id的部分字符或者全部字符"
+		echo "- 示例:id为brevent_boot，输入boot或者brevent即可"
+		echo "- 当输入完成时按两次[ENTER]; 按下 [CTRL]+C 退出"
 	else
 		echo "(i) Input a matching WORD/string at once"
 		echo "- Press ENTER twice when done; CTRL+C to exit"
@@ -161,7 +164,10 @@ toggle() {
 }
 
 
-auto_mnt() { auto_mount=true; toggle auto_mount auto_mount rm touch; }
+auto_mnt() {
+	auto_mount=true
+	$CHINESE && toggle "自动挂载" auto_mount rm touch || toggle auto_mount auto_mount rm touch; 
+}
 
 enable_disable_mods() { 
 	auto_mount=false
@@ -173,7 +179,7 @@ exxit() {
 	umount $mountPath
 	losetup -d $loopDevice
 	rmdir $mountPath
-	[ "$1" != "1" ] && ($CHINESE && echo -e "再见.\n" || echo -e "Goodbye.\n") && exit 0 || exit 1
+	[ "$1" != "1" ] && ($CHINESE && echo -e "再见~\n" || echo -e "Goodbye.\n") && exit 0 || exit 1
 }
 
 list_mods() {
@@ -181,7 +187,7 @@ list_mods() {
 	for mods in $(ls_mount_path); do
 		modid=`sed '/^id=/!d;s/.*=//' $mountPath/$mods/module.prop`    
 		modname=`sed '/^name=/!d;s/.*=//' $mountPath/$mods/module.prop`  
-		echo "$modid ($modname)"
+		echo "id:$modid name:$modname"
 	done
 }
 
@@ -212,8 +218,8 @@ resize_img() {
 	umount $mountPath
 	losetup -d $loopDevice
 	if $CHINESE; then
-	echo -e "\n(i) 输入您想更改的大小 单位为MB 然后按下[ENTER]"
-	echo "- 或者不输入任何东西, 直接按下[ENTER] 来回到主菜单"
+		echo -e "\n(i) 以MB为单位输入所需大小 然后按下[ENTER]"
+		echo "- 或者不输入任何东西, 直接按下[ENTER] 来回到主菜单"
 	else
 		echo -e "\n(i) Input the desired size in MB"
 		echo "- Or nothing to cancel"
@@ -232,8 +238,9 @@ rm_mods() {
 	Input=0
 	list_mods
 	if $CHINESE; then
-	echo -e "\n(i) 输入模块id的前几个字符或者全部字符"
-	echo "- 当输入完成时按两次[ENTER]; 按下 [CTRL]+C 退出"
+		echo "(i) 输入模块id的部分字符或者全部字符"
+		echo "- 示例:id为brevent_boot，输入boot或者brevent即可"
+		echo "- 当输入完成时按两次[ENTER]; 按下 [CTRL]+C 退出"
 	else
 		echo -e "\n(i) Input a matching WORD/string at once"
 		echo "- Press ENTER twice when done, CTRL+C to exit"
@@ -247,7 +254,7 @@ rm_mods() {
 
 	if grep -Eq '[0-9]|[a-z]|[A-Z]' $tmpf; then
 		. $tmpf
-		$CHINESE && echo "被删除的模块:" || echo "Removed Module(s):"
+		$CHINESE && echo "已移除模块:" || echo "Removed Module(s):"
 		cat $tmpf2
 	else
 		$CHINESE && echo "(!) 操作终止: 无输入或输入错误" || echo "(!) Operation aborted: null/invalid input"
@@ -260,7 +267,7 @@ immortal_m() {
 	if ls /cache | grep -i magisk | grep -iq img; then
 		if $CHINESE; then
 		echo "(i) 在 /cache 找到了 magisk 镜像文件"
-		echo "- 您正在使用f2fs文件系统作为错误缓存解决方案吗? (y/N)"
+		echo "- 您正在使用F2FS bug cache workaround吗? (y/N)"
 		else
 			echo "(i) A Magisk image file has been found in /cache"
 			echo "- Are you using the F2FS bug cache workaround? (y/N)"
@@ -283,19 +290,19 @@ immortal_m() {
 				&& echo "-> ln -s /data/media/magisk.img $IMG" \
 				&& ln -s /data/media/magisk.img $IMG \
 				&& ($CHINESE && echo -e "- 一切就绪.\n" || echo -e "- All set.\n") \
-				&& ($CHINESE && echo "(i) 在恢复出厂设置后再次执行这个操作来创建软链接" || echo "(i) Run this again after a factory reset to recreate the symlink.") \
+				&& ($CHINESE && echo "(i) 在恢复出厂设置后再次运行此项以重新创建符号链接" || echo "(i) Run this again after a factory reset to recreate the symlink.") \
 				|| ($CHINESE && Err "- (!) $IMG 无法被移动" || Err "- (!) $IMG couldn't be moved")
 			
 		else
 			if [ ! -e "$IMG" ]; then
-				echo "(i) Fresh ROM, uh?"
+				$CHINESE && echo "(i) 干净的ROM, 嗯?" || echo "(i) Fresh ROM, uh?"
 				echo "-> ln -s /data/media/magisk.img $IMG"
 				ln -s /data/media/magisk.img $IMG \
-          && ($CHINESE && echo "- 重新创建软链接成功" || echo "- Symlink recreated successfully") \
+          && ($CHINESE && echo "- 重新创建符号链接成功" || echo "- Symlink recreated successfully") \
           && ($CHINESE && echo "- 一切就绪" || echo "- You're all set") \
-          || ($CHINESE && echo -e "\n(!) 软链接创建失败" || echo -e "\n(!) Symlink creation failed")
+          || ($CHINESE && echo -e "\n(!) 符号链接创建失败" || echo -e "\n(!) Symlink creation failed")
 			else
-				$CHINESE && echo -e "(!) $IMG 已存在 -- 不能创建软链接" || echo -e "(!) $IMG exists -- symlink cannot be created"
+				$CHINESE && echo -e "(!) $IMG 已存在 -- 不能创建符号链接" || echo -e "(!) $IMG exists -- symlink cannot be created"
 			fi
 		fi
 	fi
@@ -304,8 +311,8 @@ immortal_m() {
 
 m_settings() {
 	if $CHINESE; then
-		echo "(!) 警告:这个选项具有潜在的危险"
-		echo "- 仅限高级用户使用"
+		echo "(!) 警告: 接下来的操作可能存在危险"
+		echo "- 仅限专业用户操作"
 		echo "- 是否继续? (y/N)"
 	else
 		echo "(!) Warning: potentially dangerous section"
@@ -328,7 +335,7 @@ ZZ --> 保存更改并退出
 /STRING --> 将光标移动到第一个匹配STRING的位置
 n --> 将光标移动到下一个匹配STRING的位置
 
-按下回车键继续...
+按下[ENTER]继续...
 EOD
 		else
 			cat <<EOD

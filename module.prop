@@ -1,7 +1,7 @@
 id=mm
 name=Recovery下的Magisk管理器 (mm)
-version=2018.8.3
-versionCode=201808030
+version=2018.8.5
+versionCode=201808050
 author=VR25 @ xda-developers ; cjybyjk @ coolapk
 description=在Recovery模式下管理Magisk镜像, 数据, 模块与设置 -- 在终端中运行 "/data/media/mm"
 minMagisk=1500
