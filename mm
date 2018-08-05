@@ -2,18 +2,6 @@
 # (c) 2017-2018, VR25 @ xda-developers ; cjybyjk @ coolapk
 # License: GPL v3+
 
-# language select
-CHINESE=false
-ON="(ON)"
-OFF="(OFF)"
-zh_prop="$(getprop persist.sys.locale) $(getprop persist.sys.language)"
-if [ "$(grep 'zh' '/sdcard/TWRP/.twres')" != "" ] || \
-	[ "$(echo $zh_prop | grep 'zh')" != "" ]; then
-	CHINESE=true
-	ON="(启用)"
-	OFF="(禁用)"
-fi
-
 # detect whether in boot mode
 ps | grep zygote | grep -v grep >/dev/null && BOOTMODE=true || BOOTMODE=false
 $BOOTMODE || ps -A 2>/dev/null | grep zygote | grep -v grep >/dev/null && BOOTMODE=true
@@ -21,15 +9,9 @@ $BOOTMODE || id | grep -q 'uid=0' || BOOTMODE=true
 
 # exit if running in boot mode
 if $BOOTMODE; then
-	if $CHINESE; then
-		echo -e "\n我知道你想干啥... :)"
-		echo "- 这是个坏主意! "
-		echo -e "- 仅供在recovery模式下使用\n"
-	else
-		echo -e "\nI saw what you did there... :)"
-		echo "- Bad idea!"
-		echo -e "- This is meant to be used in recovery mode only.\n"
-	fi
+	echo -e "\n我知道你想干啥... :)"
+	echo "- 这是个坏主意! "
+	echo -e "- 仅供在recovery模式下使用\n"
 	exit 1
 fi
 
@@ -61,7 +43,7 @@ mount_image() {
     done
   fi
   if ! is_mounted $mountPath; then
-    $CHINESE && echo -e "\n(!) $IMG 挂载失败... 终止\n" || echo -e "\n(!) $IMG mount failed... abort\n"
+    echo -e "\n(!) $IMG 挂载失败... 终止\n"
     exit 1
   fi
 }
@@ -70,7 +52,6 @@ mount_image() {
 
 actions() {
 	echo
-	if $CHINESE; then
 	cat <<EOD
 e) 启用/禁用模块
 l) 列出安装的模块
@@ -82,25 +63,12 @@ u) 卸载模块
 ---
 x. 退出
 EOD
-	else
-		cat <<EOD
-e) Enable/disable modules
-l) List installed modules
-m) Make magisk.img survive f. resets
-r) Resize magisk.img
-s) Change Magisk settings (using vi text editor)
-t) Toggle auto_mount
-u) Uninstall modules
----
-x. Exit
-EOD
-	fi
 	read Input
 	echo
 }
 
 exit_or_not() {
-	$CHINESE && echo -e "\n(i) 你还想继续进行其他操作吗? (Y/n)" || echo -e "\n(i) Would you like to do anything else? (Y/n)"
+	echo -e "\n(i) 你还想继续进行其他操作吗? (Y/n)"
 	read Ans
 	echo $Ans | grep -iq n && echo && exxit || opts
 }
@@ -109,90 +77,80 @@ ls_mount_path() { ls -1 $mountPath | grep -v 'lost+found'; }
 
 
 toggle() {
-	$CHINESE && echo "<切换 $1>" || echo "<Toggle $1>" 
+	echo "<切换 $1>"
 	: > $tmpf
 	: > $tmpf2
 	Input=0
 	
 	for mod in $(ls_mount_path); do
 		if $auto_mount; then
-			[ -f "$mod/$2" ] && echo "$mod $ON" >> $tmpf \
-				|| echo "$mod $OFF" >> $tmpf
+			[ -f "$mod/$2" ] && echo "$mod (启用)" >> $tmpf \
+				|| echo "$mod (禁用)" >> $tmpf
 		else
-			[ -f "$mod/$2" ] && echo "$mod $OFF" >> $tmpf \
-				|| echo "$mod $ON" >> $tmpf
+			[ -f "$mod/$2" ] && echo "$mod (禁用)" >> $tmpf \
+				|| echo "$mod (启用)" >> $tmpf
 		fi
 	done
 	
 	echo
 	cat $tmpf
 	echo
-	if $CHINESE; then
-		echo "(i) 输入模块id的部分字符或者全部字符"
-		echo "- 示例:id为brevent_boot，输入boot或者brevent即可"
-		echo "- 当输入完成时按两次[ENTER]; 按下 [CTRL]+C 退出"
-	else
-		echo "(i) Input a matching WORD/string at once"
-		echo "- Press ENTER twice when done; CTRL+C to exit"
-	fi
+
+	echo "(i) 输入模块id的部分字符或者全部字符"
+	echo "- 示例:id为brevent_boot，输入boot或者brevent即可"
+	echo "- 当输入完成时按两次[ENTER]; 按下 [CTRL]+C 退出"
+
 	until [ -z "$Input" ]; do
 		read Input
 		if [ -n "$Input" ]; then
-			grep "$Input" $tmpf | grep -q "$ON" && \
-				echo "$3 $(grep "$Input" $tmpf | grep "$ON")/$2" >> $tmpf2
-			grep "$Input" $tmpf | grep -q "$OFF" && \
-				echo "$4 $(grep "$Input" $tmpf | grep "$OFF")/$2" >> $tmpf2
+			grep "$Input" $tmpf | grep -q '(启用)' && \
+				echo "$3 $(grep "$Input" $tmpf | grep '(启用)')/$2" >> $tmpf2
+			grep "$Input" $tmpf | grep -q '(禁用)' && \
+				echo "$4 $(grep "$Input" $tmpf | grep '(禁用)')/$2" >> $tmpf2
 		fi
 	done
 	
-	cat $tmpf2 | sed "s/ $ON//" | sed "s/ $OFF//" > $tmpf
+	cat $tmpf2 | sed 's/ (启用)//' | sed 's/ (禁用)//' > $tmpf
 	
 	if grep -Eq '[0-9]|[a-z]|[A-Z]' $tmpf; then
 		. $tmpf
-		$CHINESE && echo "结果:" || echo "Result(s):"
+		echo "结果:"
 		
-		grep -q "$ON" $tmpf2 && cat $tmpf2 \
-			| sed "s/$ON/$ON --> $OFF/" \
+		grep -q '(启用)' $tmpf2 && cat $tmpf2 \
+			| sed 's/(启用)/(启用) --> (禁用)/' \
 			| sed "s/$3 //" | sed "s/$4 //" | sed "s/\/$2//"
-		grep -q "$OFF" $tmpf2 && cat $tmpf2 \
-			| sed "s/$OFF/$OFF --> $ON/" \
+		grep -q '(禁用)' $tmpf2 && cat $tmpf2 \
+			| sed 's/(禁用)/(禁用) --> (启用)/' \
 			| sed "s/$3 //" | sed "s/$4 //" | sed "s/\/$2//"
 	
 	else
-		$CHINESE && echo "(i) 操作终止: 无输入或输入错误" || echo "(i) Operation aborted: null/invalid input"
+		echo "(i) 操作终止: 无输入或输入错误"
 	fi
 }
 
 
-auto_mnt() {
-	auto_mount=true
-	$CHINESE && toggle "自动挂载" auto_mount rm touch || toggle auto_mount auto_mount rm touch; 
-}
+auto_mnt() { auto_mount=true; toggle auto_mount auto_mount rm touch; }
 
-enable_disable_mods() { 
-	auto_mount=false
-	$CHINESE && toggle "模块 启用/禁用" disable touch rm || toggle "Module ON/OFF" disable touch rm
-}
+enable_disable_mods() { auto_mount=false; toggle "模块 启用/禁用" disable touch rm; }
 
 exxit() {
 	cd $tmpDir
 	umount $mountPath
 	losetup -d $loopDevice
 	rmdir $mountPath
-	[ "$1" != "1" ] && ($CHINESE && echo -e "再见~\n" || echo -e "Goodbye.\n") && exit 0 || exit 1
+	[ "$1" != "1" ] && echo -e "再见~\n" || exit 1
 }
 
 list_mods() {
-	$CHINESE && echo -e "<已安装模块列表>\n" || echo -e "<Installed Modules>\n"
-	for mods in $(ls_mount_path); do
-		modid=`sed '/^id=/!d;s/.*=//' $mountPath/$mods/module.prop`    
-		modname=`sed '/^name=/!d;s/.*=//' $mountPath/$mods/module.prop`  
-		echo "id:$modid name:$modname"
+	echo -e "<已安装模块列表>\n"
+	for mods in $(ls_mount_path); do 
+		modname=`sed '/^name=/!d;s/.*=//' $mountPath/$mods/module.prop`
+		echo "$mods ($modname)"
 	done
 }
 
 opts() {
-	$CHINESE && echo -e "\n(i) 选择一个选项..." || echo -e "\n(i) Pick an option..."
+	echo -e "\n(i) 选择一个选项..."
 	actions
 
 	case "$Input" in
@@ -212,21 +170,16 @@ opts() {
 
 
 resize_img() {
-	$CHINESE && echo -e "<改变 magisk.img 的大小>\n" || echo -e "<Resize magisk.img>\n"
+	echo -e "<改变 magisk.img 的大小>\n"
 	cd $tmpDir
 	df -h $mountPath
 	umount $mountPath
 	losetup -d $loopDevice
-	if $CHINESE; then
-		echo -e "\n(i) 以MB为单位输入所需大小 然后按下[ENTER]"
-		echo "- 或者不输入任何东西, 直接按下[ENTER] 来回到主菜单"
-	else
-		echo -e "\n(i) Input the desired size in MB"
-		echo "- Or nothing to cancel"
-	fi
+	echo -e "\n(i) 以MB为单位输入所需大小 然后按下[ENTER]"
+	echo "- 或者不输入任何东西, 直接按下[ENTER] 来回到主菜单"
 	read Input
 	[ -n "$Input" ] && echo -e "\n$(resize2fs $IMG ${Input}M)" \
-    || ($CHINESE && echo -e "\n(!) 操作终止: 无输入或输入错误" || echo -e "\n(!) Operation aborted: null/invalid input")
+    || echo -e "\n(!) 操作终止: 无输入或输入错误"
 	mount_image $IMG $mountPath
 	cd $mountPath
 }
@@ -237,14 +190,11 @@ rm_mods() {
 	: > $tmpf2
 	Input=0
 	list_mods
-	if $CHINESE; then
-		echo "(i) 输入模块id的部分字符或者全部字符"
-		echo "- 示例:id为brevent_boot，输入boot或者brevent即可"
-		echo "- 当输入完成时按两次[ENTER]; 按下 [CTRL]+C 退出"
-	else
-		echo -e "\n(i) Input a matching WORD/string at once"
-		echo "- Press ENTER twice when done, CTRL+C to exit"
-	fi
+
+	echo "(i) 输入模块id的部分字符或者全部字符"
+	echo "- 示例:id为brevent_boot，输入boot或者brevent即可"
+	echo "- 当输入完成时按两次[ENTER]; 按下 [CTRL]+C 退出"
+
 	until [ -z "$Input" ]; do
 		read Input
 		[ -n "$Input" ] && ls_mount_path | grep "$Input" \
@@ -254,10 +204,10 @@ rm_mods() {
 
 	if grep -Eq '[0-9]|[a-z]|[A-Z]' $tmpf; then
 		. $tmpf
-		$CHINESE && echo "已移除模块:" || echo "Removed Module(s):"
+		echo "已移除模块:"
 		cat $tmpf2
 	else
-		$CHINESE && echo "(!) 操作终止: 无输入或输入错误" || echo "(!) Operation aborted: null/invalid input"
+		echo "(!) 操作终止: 无输入或输入错误"
 	fi
 }
 
@@ -265,13 +215,8 @@ rm_mods() {
 immortal_m() {
 	F2FS_workaround=false
 	if ls /cache | grep -i magisk | grep -iq img; then
-		if $CHINESE; then
 		echo "(i) 在 /cache 找到了 magisk 镜像文件"
 		echo "- 您正在使用F2FS bug cache workaround吗? (y/N)"
-		else
-			echo "(i) A Magisk image file has been found in /cache"
-			echo "- Are you using the F2FS bug cache workaround? (y/N)"
-		fi
 		read F2FS_workaround
 		echo
 		case $F2FS_workaround in
@@ -279,30 +224,30 @@ immortal_m() {
 			* ) F2FS_workaround=false;;
 		esac
 		
-		$F2FS_workaround && ($CHINESE && echo "(!) 这个选项并不适合你" || echo "(!) This option is not for you then")
+		$F2FS_workaround && echo "(!) 这个选项并不适合你"
 	fi
 	
 	if ! $F2FS_workaround; then
 		if [ ! -f /data/media/magisk.img ] && [ -f "$IMG" ] && [ ! -h "$IMG" ]; then
 			Err() { echo "$1"; exit_or_not; }
-			$CHINESE && echo "(i) 移动 $IMG 到 /data/media" || echo "(i) Moving $IMG to /data/media"
+			echo "(i) 移动 $IMG 到 /data/media"
 			mv $IMG /data/media \
 				&& echo "-> ln -s /data/media/magisk.img $IMG" \
 				&& ln -s /data/media/magisk.img $IMG \
-				&& ($CHINESE && echo -e "- 一切就绪.\n" || echo -e "- All set.\n") \
-				&& ($CHINESE && echo "(i) 在恢复出厂设置后再次运行此项以重新创建符号链接" || echo "(i) Run this again after a factory reset to recreate the symlink.") \
-				|| ($CHINESE && Err "- (!) $IMG 无法被移动" || Err "- (!) $IMG couldn't be moved")
+				&& echo -e "- 一切就绪.\n" \
+				&& echo "(i) 在恢复出厂设置后再次运行此项以重新创建符号链接"  \
+				|| Err "- (!) $IMG 无法被移动"
 			
 		else
 			if [ ! -e "$IMG" ]; then
-				$CHINESE && echo "(i) 干净的ROM, 嗯?" || echo "(i) Fresh ROM, uh?"
+				echo "(i) 干净的ROM, 嗯?"
 				echo "-> ln -s /data/media/magisk.img $IMG"
 				ln -s /data/media/magisk.img $IMG \
-          && ($CHINESE && echo "- 重新创建符号链接成功" || echo "- Symlink recreated successfully") \
-          && ($CHINESE && echo "- 一切就绪" || echo "- You're all set") \
-          || ($CHINESE && echo -e "\n(!) 符号链接创建失败" || echo -e "\n(!) Symlink creation failed")
+          && echo "- 重新创建符号链接成功" \
+          && echo "- 一切就绪" \
+          || echo -e "\n(!) 符号链接创建失败"
 			else
-				$CHINESE && echo -e "(!) $IMG 已存在 -- 不能创建符号链接" || echo -e "(!) $IMG exists -- symlink cannot be created"
+				echo -e "(!) $IMG 已存在 -- 不能创建符号链接"
 			fi
 		fi
 	fi
@@ -310,20 +255,13 @@ immortal_m() {
 
 
 m_settings() {
-	if $CHINESE; then
-		echo "(!) 警告: 接下来的操作可能存在危险"
-		echo "- 仅限专业用户操作"
-		echo "- 是否继续? (y/N)"
-	else
-		echo "(!) Warning: potentially dangerous section"
-		echo "- For advanced users only"
-		echo "- Proceed? (y/N)"
-	fi
+	echo "(!) 警告: 接下来的操作可能存在危险"
+	echo "- 仅限专业用户操作"
+	echo "- 是否继续? (y/N)"
 	read Ans
 
 	if echo "$Ans" | grep -i y; then
-		if $CHINESE; then
-			cat <<EOD
+		cat <<EOD
 
 一些vi编辑器的基本用法
 
@@ -337,24 +275,7 @@ n --> 将光标移动到下一个匹配STRING的位置
 
 按下[ENTER]继续...
 EOD
-		else
-			cat <<EOD
 
-Some Basic vi Usage
-
-i --> enable insertion/typing mode
-
-esc key --> return to comand mode
-ZZ --> save changes & exit
-:q! ENTER --> discard changes & exit
-/STRING --> go to STRING
-
-
-Note that I'm no vi expert by any meAns, but the above should suffice.
-
-Hit ENTER to continue...
-EOD
-		fi
 		read
 		vi /data/data/com.topjohnwu.magisk/shared_prefs/com.topjohnwu.magisk_preferences.xml
 	fi
@@ -373,7 +294,7 @@ mount /cache 2>/dev/null
 [ -d /data/adb/magisk ] && IMG=/data/adb/magisk.img || IMG=/data/magisk.img
 
 if [ ! -d /data/adb/magisk ] && [ ! -d /data/magisk ]; then
-	$CHINESE && echo -e "\n(!) 找不到安装的Magisk或者安装的Magisk版本不被支持\n" || echo -e "\n(!) No Magisk installation found or installed version is not supported\n"
+	echo -e "\n(!) 找不到安装的Magisk或者安装的Magisk版本不被支持\n"
 	exit 1
 fi
 
@@ -381,11 +302,8 @@ mkdir -p $tmpDir 2>/dev/null
 mount_image $IMG $mountPath
 cd $mountPath
 
-$CHINESE && echo -e "\nRecovery下的Magisk管理器 (mm)
+echo -e "\nRecovery下的Magisk管理器 (mm)
 (c) 2017-2018, VR25 @ xda-developers ; cjybyjk @ coolapk
-License: GPL v3+" || \
-echo -e "\nMagisk Manager for Recovery Mode (mm)
-(c) 2017-2018, VR25 @ xda-developers ; cjybyjk @ coolapk
-License: GPL v3+"
+License: GPL v3+" 
 
 opts
