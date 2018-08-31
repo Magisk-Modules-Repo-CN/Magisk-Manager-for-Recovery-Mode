@@ -1,5 +1,6 @@
 #!/sbin/sh
-# (c) 2017-2018, VR25 @ xda-developers ; cjybyjk @ coolapk
+# (c) 2017-2018, VR25 @ xda-developers
+# translator: cjybyjk @ coolapk
 # License: GPL v3+
 
 # detect whether in boot mode
