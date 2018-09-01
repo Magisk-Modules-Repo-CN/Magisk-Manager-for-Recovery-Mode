@@ -1,6 +1,5 @@
 # Magisk Manager for Recovery Mode
 ## (c) 2017-2018, VR25 @ xda-developers
-## translator: cjybyjk @ coolapk
 ### License: GPL v3+
 
 
