@@ -1,6 +1,5 @@
 #!/sbin/sh
 # (c) 2017-2018, VR25 @ xda-developers
-# translator: cjybyjk @ coolapk
 # License: GPL v3+
 
 # detect whether in boot mode
@@ -10,7 +9,7 @@ $BOOTMODE || id | grep -q 'uid=0' || BOOTMODE=true
 
 # exit if running in boot mode
 if $BOOTMODE; then
-	echo -e "\n我知道你想干啥... :)"
+	echo -e "\n我知道你想干啥...... :)"
 	echo "- 这是个坏主意! "
 	echo -e "- 仅供在recovery模式下使用\n"
 	exit 1
@@ -44,7 +43,7 @@ mount_image() {
     done
   fi
   if ! is_mounted $mountPath; then
-    echo -e "\n(!) $IMG 挂载失败... 终止\n"
+    echo -e "\n(!) $IMG 挂载失败...... 终止\n"
     exit 1
   fi
 }
@@ -151,7 +150,7 @@ list_mods() {
 }
 
 opts() {
-	echo -e "\n(i) 选择一个选项..."
+	echo -e "\n(i) 选择一个选项......"
 	actions
 
 	case "$Input" in
@@ -274,7 +273,7 @@ ZZ --> 保存更改并退出
 /STRING --> 将光标移动到第一个匹配STRING的位置
 n --> 将光标移动到下一个匹配STRING的位置
 
-按下[ENTER]继续...
+按下[ENTER]继续......
 EOD
 
 		read
@@ -304,7 +303,7 @@ mount_image $IMG $mountPath
 cd $mountPath
 
 echo -e "\nRecovery下的Magisk管理器 (mm)
-(c) 2017-2018, VR25 @ xda-developers ; cjybyjk @ coolapk
+(c) 2017-2018, VR25 @ xda-developers
 License: GPL v3+" 
 
 opts
