@@ -138,7 +138,7 @@ exxit() {
 	umount $mountPath
 	losetup -d $loopDevice
 	rmdir $mountPath
-	[ "$1" != "1" ] && echo -e "再见~\n" || exit 1
+	[ "$1" != "1" ] && exec echo -e "再见~\n" || exit 1
 }
 
 list_mods() {
